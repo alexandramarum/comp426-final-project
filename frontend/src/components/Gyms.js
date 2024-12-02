@@ -1,6 +1,24 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
-function Gyms() {
+const Gyms = () => {
+
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function (position) {
+          setLatitude(position.coords.latitude)
+          setLongitude(position.coords.longitude)
+      }, function (error) {
+          console.error("Error getting location:", error);
+          alert("Could not get your location. Please allow location access to use the live chat.");
+      });
+  } else {
+      alert("Geolocation is not supported by your browser.");
+  }
+  })
+
   return (
     <div className="bg-white shadow-lg rounded-lg p-8">
       <h3 className="text-2xl font-bold mb-6 text-gray-700">
@@ -14,6 +32,8 @@ function Gyms() {
               <input
                 type="text"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={longitude}
+                readOnly
               />
             </div>
 
@@ -24,6 +44,8 @@ function Gyms() {
               <input
                 type="text"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={latitude}
+                readOnly
               />
             </div>
 
