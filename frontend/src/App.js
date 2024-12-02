@@ -9,6 +9,7 @@ import {
 import Workouts from "./components/Workouts";
 import Goals from "./components/Goals";
 import Gyms from "./components/Gyms";
+import Login from "./components/Login";
 
 const App = () => {
   return (
@@ -56,7 +57,7 @@ const App = () => {
 
         <main className="flex-grow">
           <Routes>
-            <Route path="/" element={<Navigate to="/workouts" />} />
+            <Route path="/" element={<Login />} />
             <Route path="/workouts" element={<Workouts />} />
             <Route path="/goals" element={<Goals />} />
             <Route path="/gyms" element={<Gyms />} />
