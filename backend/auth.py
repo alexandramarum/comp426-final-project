@@ -10,21 +10,20 @@ from models.entities import User
 from dotenv import load_dotenv
 from datetime import datetime, timedelta, timezone
 import os
+import logging
 
-# JWT Configuration
+logging.basicConfig(level=logging.DEBUG)
+
 
 load_dotenv()
 
-# JWT Configuration
 SECRET = os.getenv("JWT_SECRET") 
 ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", 30))
 
-# Routers
 auth_router = APIRouter()
 register_router = APIRouter()
 login_router = APIRouter()
-
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode = data.copy()
@@ -36,6 +35,7 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     return jwt.encode(to_encode, SECRET, algorithm=ALGORITHM)
 
 def get_current_user(token: str, session: Session = Depends(get_session)) -> User:
+    logging.debug(f"here")
     try:
         payload = jwt.decode(token, SECRET, algorithms=[ALGORITHM])
         user_id = payload.get("sub")
@@ -44,13 +44,12 @@ def get_current_user(token: str, session: Session = Depends(get_session)) -> Use
         user = session.get(User, int(user_id))
         if user is None:
             raise HTTPException(status_code=401, detail="User not found")
-        print(f"DEBUG: Retrieved user: {user}")  # Add this line
+        logging.debug(f"DEBUG: Retrieved user: {user}")  # Add this line
         return user
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
-# === Auth Endpoints ===
 
 @register_router.post("/register", response_model=UserDetail)
 def register(user: UserCreate, session: Session = Depends(get_session)):
@@ -70,8 +69,6 @@ def login(username: str, password: str, session: Session = Depends(get_session))
     user = verify_user_credentials(session, username, password)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
-
-    # Generate the token
     access_token = create_access_token(
         data={"sub": str(user.id)}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
