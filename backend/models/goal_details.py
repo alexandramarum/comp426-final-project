@@ -7,5 +7,6 @@ class GoalDetails(BaseModel):
     description: str
     target_date: date
     status: GoalStatus
+    user_id: int  
 
 

@@ -8,4 +8,5 @@ class WorkoutDetails(BaseModel):
     duration: int
     date: date
     calories: float
+    user_id: int 
 

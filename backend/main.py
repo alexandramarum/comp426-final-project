@@ -11,7 +11,11 @@ from models.workout_details import WorkoutDetails
 from models.goal_create import GoalCreate
 from models.goal_details import GoalDetails
 from models.user_detail import UserDetail
+from models.entities import User
 from typing import List
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 app = FastAPI()
 
@@ -28,71 +32,72 @@ app.include_router(login_router, prefix="/auth", tags=["Auth"])
 def add_workout(
     workout: WorkoutCreate,
     session: Session = Depends(get_session),
-    current_user=Depends(get_current_user),
+    current_user: User =Depends(get_current_user),
 ):
     return create_workout(session, workout, current_user.id)
 
 @app.get("/workouts/", response_model=list[WorkoutDetails], tags=["Workouts"])
-def get_workouts(
+def get_all_workouts(
     session: Session = Depends(get_session),
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
+    logging.debug(f"DEBUG: Retrieved user in GET: {current_user}")
     return get_workouts(session, current_user.id)
 
 @app.put("/workouts/{workout_id}", response_model=WorkoutDetails, tags=["Workouts"])
-def update_workout(
+def update_aworkout(
     workout_id: int,
     updated_workout: WorkoutCreate,
     session: Session = Depends(get_session),
-    current_user=Depends(get_current_user),
+    current_user: User =Depends(get_current_user),
 ):
     return update_workout(session, workout_id, updated_workout, current_user.id)
 
 @app.delete("/workouts/{workout_id}", tags=["Workouts"])
-def delete_workout(
+def delete_aworkout(
     workout_id: int,
     session: Session = Depends(get_session),
-    current_user=Depends(get_current_user),
+    current_user: User =Depends(get_current_user),
 ):
     delete_workout(session, workout_id, current_user.id)
     return {"message": "Workout deleted successfully"}
 
 #Goal
 @app.post("/goals/", response_model=GoalDetails, tags=["Goals"])
-def add_goal(
+def add_agoal(
     goal: GoalCreate,
     session: Session = Depends(get_session),
-    current_user=Depends(get_current_user),
+    current_user:User =Depends(get_current_user),
 ):
     return create_goal(session, goal, current_user.id)
 
 @app.get("/goals/", response_model=list[GoalDetails], tags=["Goals"])
-def get_goals(
+def retrieve_goals(
     session: Session = Depends(get_session),
-    current_user=Depends(get_current_user),
+    current_user:User =Depends(get_current_user),
 ):
     return get_goals(session, current_user.id)
 
 @app.put("/goals/{goal_id}", response_model=GoalDetails, tags=["Goals"])
-def update_goal(
+def update_agoal(
     goal_id: int,
     updated_goal: GoalCreate,
     session: Session = Depends(get_session),
-    current_user=Depends(get_current_user),
+    current_user: User =Depends(get_current_user),
 ):
     return update_goal(session, goal_id, updated_goal, current_user.id)
 
 @app.delete("/goals/{goal_id}", tags=["Goals"])
-def delete_goal(
+def delete_agoal(
     goal_id: int,
     session: Session = Depends(get_session),
-    current_user=Depends(get_current_user),
+    current_user: User=Depends(get_current_user),
 ):
     delete_goal(session, goal_id, current_user.id)
     return {"message": "Goal deleted successfully"}
 
 @app.get("/users/{username}", response_model=UserDetail, tags=["Users"])
-def get_user(username: str, session: Session = Depends(get_session), current_user=Depends(get_current_user)):
+def get_user(username: str, session: Session = Depends(get_session), current_user:User =Depends(get_current_user)):
     """
     Get details of a user by username. Requires authentication.
     """
@@ -102,7 +107,7 @@ def get_user(username: str, session: Session = Depends(get_session), current_use
     return user
 
 @app.get("/users/", response_model=List[UserDetail], tags=["Users"])
-def get_all_users(session: Session = Depends(get_session), current_user=Depends(get_current_user)):
+def get_all_users(session: Session = Depends(get_session), current_user: User =Depends(get_current_user)):
     """
     Get a list of all users. Requires authentication.
     """
