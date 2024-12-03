@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlmodel import SQLModel
 from database import engine, get_session
@@ -14,10 +15,26 @@ from models.user_detail import UserDetail
 from models.entities import User
 from typing import List
 import logging
+import os
+from dotenv import load_dotenv
+import httpx
 
 logging.basicConfig(level=logging.DEBUG)
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins; restrict this in production
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all HTTP methods
+    allow_headers=["*"],  # Allows all headers
+)
+
+
+load_dotenv()
+
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 # Initialize database
 SQLModel.metadata.create_all(engine)
@@ -112,3 +129,30 @@ def get_all_users(session: Session = Depends(get_session), current_user: User =D
     Get a list of all users. Requires authentication.
     """
     return get_all_users(session)
+
+@app.get("/api/nearby-gyms", tags=["Gyms"])
+async def gyms(
+    location: str = Query(..., description="The location in 'latitude,longitude' format"),
+    radius: int = Query(1000, description="Radius in meters"),
+    place_type: str = Query("gym", description="Type of place to search")
+):
+    # Google Places API URL
+    google_api_url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
+
+    # Parameters to pass to the Google Places API
+    params = {
+        "location": location,
+        "radius": radius,
+        "type": place_type,
+        "key": GOOGLE_API_KEY
+    }
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(google_api_url, params=params)
+            if response.status_code != 200:
+                raise HTTPException(status_code=response.status_code, detail="Failed to fetch data from Google Places API")
+            return response.json()
+
+        except httpx.RequestError as e:
+            raise HTTPException(status_code=500, detail=f"An error occurred while making a request to Google Places API: {str(e)}")

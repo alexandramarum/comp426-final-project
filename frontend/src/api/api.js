@@ -19,3 +19,8 @@ export const deleteGoal = (goalId) =>
   axios.delete(`${API_BASE_URL}/goals/${goalId}`);
 export const updateGoal = (goalId, goalData) =>
   axios.put(`${API_BASE_URL}/goals/${goalId}`, goalData);
+
+// Gym API
+export const fetchGyms = (location, radius, type) => axios.get(`${API_BASE_URL}/api/nearby-gyms"`)
+
+
