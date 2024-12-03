@@ -1,41 +1,29 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import {
+  fetchWorkouts,
+  addWorkout as apiAddWorkout,
+  deleteWorkout as apiDeleteWorkout,
+  updateWorkout as apiUpdateWorkout,
+} from "../api/api"; // Adjust the import path if needed
 
-// dummy data for workouts
 const Workouts = () => {
-  const [workouts, setWorkouts] = useState([
-    {
-      id: 1,
-      name: "Morning Run",
-      duration: "30 mins",
-      type: "Cardio",
-      caloriesBurned: 300,
-    },
-    {
-      id: 2,
-      name: "Yoga Session",
-      duration: "45 mins",
-      type: "Flexibility",
-      caloriesBurned: 150,
-    },
-    {
-      id: 3,
-      name: "Strength Training",
-      duration: "1 hour",
-      type: "Strength",
-      caloriesBurned: 500,
-    },
-    {
-      id: 4,
-      name: "Cycling",
-      duration: "2 hours",
-      type: "Endurance",
-      caloriesBurned: 800,
-    },
-  ]);
-
+  const [workouts, setWorkouts] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [activeWorkout, setActiveWorkout] = useState(null);
+
+  // Fetch workouts from the backend on component mount
+  useEffect(() => {
+    const getWorkouts = async () => {
+      try {
+        const response = await fetchWorkouts();
+        setWorkouts(response.data); // Assume the API returns a list of workouts
+      } catch (error) {
+        console.error("Error fetching workouts:", error);
+      }
+    };
+    getWorkouts();
+  }, []);
 
   const editWorkout = (workout) => {
     setActiveWorkout(workout);
@@ -47,25 +35,39 @@ const Workouts = () => {
     setActiveWorkout((prev) => ({ ...prev, [name]: value }));
   };
 
-  const saveWorkout = (e) => {
+  const saveWorkout = async (e) => {
     e.preventDefault();
-    setWorkouts((prev) =>
-      prev.map((workout) =>
-        workout.id === activeWorkout.id ? activeWorkout : workout
-      )
-    );
-    setIsEditing(false);
+    try {
+      const response = await apiUpdateWorkout(activeWorkout.id, activeWorkout);
+      setWorkouts((prev) =>
+        prev.map((workout) =>
+          workout.id === activeWorkout.id ? response.data : workout
+        )
+      );
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error updating workout:", error);
+    }
   };
 
-  const deleteWorkout = (id) => {
-    setWorkouts((prev) => prev.filter((workout) => workout.id !== id));
+  const deleteWorkout = async (id) => {
+    try {
+      await apiDeleteWorkout(id);
+      setWorkouts((prev) => prev.filter((workout) => workout.id !== id));
+    } catch (error) {
+      console.error("Error deleting workout:", error);
+    }
   };
 
-  const addWorkout = (e) => {
+  const addWorkout = async (e) => {
     e.preventDefault();
-    const newWorkout = { ...activeWorkout, id: Date.now() }; // Assign a unique ID
-    setWorkouts((prev) => [...prev, newWorkout]);
-    setIsAdding(false);
+    try {
+      const response = await apiAddWorkout(activeWorkout);
+      setWorkouts((prev) => [...prev, response.data]);
+      setIsAdding(false);
+    } catch (error) {
+      console.error("Error adding workout:", error);
+    }
   };
 
   const startAddingWorkout = () => {
@@ -106,7 +108,7 @@ const Workouts = () => {
   );
 };
 
-// workout table
+// Workout Table
 const WorkoutTable = ({ workouts, onEdit, onDelete }) => {
   return (
     <div className="overflow-x-auto mb-10">
@@ -181,7 +183,7 @@ const WorkoutTable = ({ workouts, onEdit, onDelete }) => {
   );
 };
 
-// workout add/edit modal
+// Workout Modal
 const WorkoutModal = ({ workout, onFieldChange, onSave, onCancel }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 load_dotenv()
 
-SECRET = os.getenv("JWT_SECRET") 
+SECRET = os.getenv("JWT_SECRET")
 ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", 30))
 
@@ -25,14 +25,20 @@ auth_router = APIRouter()
 register_router = APIRouter()
 login_router = APIRouter()
 
+
 def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta  # Use timezone-aware UTC datetime
+        expire = (
+            datetime.now(timezone.utc) + expires_delta
+        )  # Use timezone-aware UTC datetime
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=15)  # Default expiration
+        expire = datetime.now(timezone.utc) + timedelta(
+            minutes=15
+        )  # Default expiration
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET, algorithm=ALGORITHM)
+
 
 def get_current_user(token: str, session: Session = Depends(get_session)) -> User:
     logging.debug(f"here")
@@ -50,7 +56,6 @@ def get_current_user(token: str, session: Session = Depends(get_session)) -> Use
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
-
 @register_router.post("/register", response_model=UserDetail)
 def register(user: UserCreate, session: Session = Depends(get_session)):
     """
@@ -61,6 +66,7 @@ def register(user: UserCreate, session: Session = Depends(get_session)):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @login_router.post("/login")
 def login(username: str, password: str, session: Session = Depends(get_session)):
     """
@@ -70,13 +76,15 @@ def login(username: str, password: str, session: Session = Depends(get_session))
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     access_token = create_access_token(
-        data={"sub": str(user.id)}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        data={"sub": str(user.id)},
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
 
 @auth_router.get("/me", response_model=UserDetail)
 def get_me(current_user: User = Depends(get_current_user)):
     """
     Get the current authenticated user's details.
     """
-    return UserDetail(id=current_user.id, username=current_user.username) 
+    return UserDetail(id=current_user.id, username=current_user.username)
