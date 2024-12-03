@@ -17,6 +17,39 @@ const Gyms = () => {
     }
   });
 
+  async function findNearbyGyms() {
+    const radius = 16093;
+    const placeType = "gym";
+
+    const location = `${latitude},${longitude}`;
+
+    const url = `http://127.0.0.1:8000/api/nearby-gyms?location=${location}&radius=${radius}&place_type=${placeType}`;
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error("Failed to fetch nearby shelters");
+        }
+
+        const data = await response.json();
+
+        if (data.status === "OK") {
+          const formattedGyms = data.results.map((gym) => ({
+            name: gym.name,
+            location: gym.vicinity,
+          }));
+          setGyms(formattedGyms);
+        } else {
+            console.error("Error:", data.status, data.error_message);
+            alert(`Failed to retrieve shelters: ${data.status}`);
+        }
+    } catch (error) {
+        console.error("Error fetching data:", error);
+        alert("Error fetching shelters.");
+    }
+}
+
+
   const onSubmit = (e) => {
     e.preventDefault();
 
@@ -26,22 +59,7 @@ const Gyms = () => {
       );
     } else {
       setErrorMessage("");
-      // API call
-      const data = [
-        {
-          name: "Fitness Gym 1",
-          location: "123 Main St, City, State, 12345",
-        },
-        {
-          name: "Powerhouse Gym",
-          location: "456 Oak Ave, City, State, 67890",
-        },
-        {
-          name: "Urban Fitness",
-          location: "789 Pine St, City, State, 11223",
-        },
-      ];
-      setGyms(data);
+      findNearbyGyms()
     }
   };
 
