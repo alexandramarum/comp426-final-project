@@ -76,8 +76,17 @@ const Login = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+    <div
+    className="flex items-center justify-center min-h-screen bg-cover bg-center bg-repeat"
+    style={{ backgroundImage: 'url("./run.jpg")' }} 
+  >
+
       <div className="bg-white shadow-lg rounded-lg p-8 max-w-md w-full">
+
+        <h1 className="text-6xl font-bold text-center text-gray-800 mb-8">
+          Gym4Us
+        </h1>
+
         <h2 className="text-2xl font-bold text-center mb-6">
           {isRegistering ? "Register" : "Login"}
         </h2>

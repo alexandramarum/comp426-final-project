@@ -19,8 +19,8 @@ const App = () => {
           <div className="flex justify-between items-center h-16 px-4">
             <Link to="/">
               <img
-                className="w-10 h-10 rounded-full cursor-pointer"
-                src="/coolguy.jpg"
+                className="w-20 h-30 rounded-full cursor-pointer"
+                src="./gym4us.png"
                 alt="Rounded avatar"
               />
             </Link>
