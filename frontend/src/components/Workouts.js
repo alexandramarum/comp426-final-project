@@ -4,75 +4,96 @@ import {
   addWorkout as apiAddWorkout,
   deleteWorkout as apiDeleteWorkout,
   updateWorkout as apiUpdateWorkout,
-} from "../api/api"; // Adjust the import path if needed
+} from "../api/api";
 
 const Workouts = () => {
   const [workouts, setWorkouts] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
-  const [activeWorkout, setActiveWorkout] = useState(null);
+  const [currentWorkout, setCurrentWorkout] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Fetch workouts from the backend on component mount
+  const workoutTypes = ["cardio", "strength", "flexibility", "other"];
+
   useEffect(() => {
-    const getWorkouts = async () => {
+    const loadWorkouts = async () => {
       try {
-        const response = await fetchWorkouts();
-        setWorkouts(response.data); // Assume the API returns a list of workouts
-      } catch (error) {
-        console.error("Error fetching workouts:", error);
+        const data = await fetchWorkouts();
+        setWorkouts(data);
+      } catch (err) {
+        console.error("Failed to fetch workouts:", err);
+        setError("Unable to load workouts.");
+      } finally {
+        setLoading(false);
       }
     };
-    getWorkouts();
+    loadWorkouts();
   }, []);
 
-  const editWorkout = (workout) => {
-    setActiveWorkout(workout);
+  const initiateEdit = (workout) => {
+    setCurrentWorkout(workout);
     setIsEditing(true);
   };
 
-  const updateWorkoutField = (e) => {
+  const initiateAdd = () => {
+    setCurrentWorkout({ duration: "", type: "", calories: "", date: "" });
+    setIsAdding(true);
+  };
+
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setActiveWorkout((prev) => ({ ...prev, [name]: value }));
+    setCurrentWorkout((prev) => ({ ...prev, [name]: value }));
   };
 
   const saveWorkout = async (e) => {
     e.preventDefault();
     try {
-      const response = await apiUpdateWorkout(activeWorkout.id, activeWorkout);
-      setWorkouts((prev) =>
-        prev.map((workout) =>
-          workout.id === activeWorkout.id ? response.data : workout
+      const updatedWorkout = await apiUpdateWorkout(
+        currentWorkout.id,
+        currentWorkout
+      );
+      setWorkouts((prevWorkouts) =>
+        prevWorkouts.map((workout) =>
+          workout.id === currentWorkout.id ? updatedWorkout : workout
         )
       );
       setIsEditing(false);
-    } catch (error) {
-      console.error("Error updating workout:", error);
+      setCurrentWorkout(null);
+    } catch (err) {
+      console.error("Update failed:", err);
+      setError("Could not update workout.");
+    }
+  };
+
+  const addNewWorkout = async (e) => {
+    e.preventDefault();
+    try {
+      const newWorkout = await apiAddWorkout(currentWorkout);
+      setWorkouts((prevWorkouts) => [...prevWorkouts, newWorkout]);
+      setIsAdding(false);
+      setCurrentWorkout(null);
+    } catch (err) {
+      console.error("Addition failed:", err);
+      setError("Could not add workout.");
     }
   };
 
   const deleteWorkout = async (id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this workout?"
+    );
+    if (!confirmDelete) return;
+
     try {
       await apiDeleteWorkout(id);
-      setWorkouts((prev) => prev.filter((workout) => workout.id !== id));
-    } catch (error) {
-      console.error("Error deleting workout:", error);
+      setWorkouts((prevWorkouts) =>
+        prevWorkouts.filter((workout) => workout.id !== id)
+      );
+    } catch (err) {
+      console.error("Deletion failed:", err);
+      setError("Could not delete workout.");
     }
-  };
-
-  const addWorkout = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await apiAddWorkout(activeWorkout);
-      setWorkouts((prev) => [...prev, response.data]);
-      setIsAdding(false);
-    } catch (error) {
-      console.error("Error adding workout:", error);
-    }
-  };
-
-  const startAddingWorkout = () => {
-    setActiveWorkout({ name: "", duration: "", type: "", caloriesBurned: "" });
-    setIsAdding(true);
   };
 
   return (
@@ -81,26 +102,37 @@ const Workouts = () => {
         <h1 className="text-3xl font-bold text-center mb-8">Workouts</h1>
         <div className="flex justify-end mb-6">
           <button
-            onClick={startAddingWorkout}
+            onClick={initiateAdd}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
           >
             Add Workout
           </button>
         </div>
-        <WorkoutTable
-          workouts={workouts}
-          onEdit={editWorkout}
-          onDelete={deleteWorkout}
-        />
+
+        {loading && <div>Loading workouts...</div>}
+        {error && <div className="text-red-500 mb-4">{error}</div>}
+
+        {!loading && !error && (
+          <WorkoutTable
+            workouts={workouts}
+            onEdit={initiateEdit}
+            onDelete={deleteWorkout}
+            workoutTypes={workoutTypes}
+          />
+        )}
+
         {(isEditing || isAdding) && (
           <WorkoutModal
-            workout={activeWorkout}
-            onFieldChange={updateWorkoutField}
-            onSave={isAdding ? addWorkout : saveWorkout}
+            workout={currentWorkout}
+            onChange={handleInputChange}
+            onSave={isAdding ? addNewWorkout : saveWorkout}
             onCancel={() => {
               setIsEditing(false);
               setIsAdding(false);
+              setCurrentWorkout(null);
+              setError(null);
             }}
+            workoutTypes={workoutTypes}
           />
         )}
       </div>
@@ -108,18 +140,21 @@ const Workouts = () => {
   );
 };
 
-// Workout Table
 const WorkoutTable = ({ workouts, onEdit, onDelete }) => {
+  const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
+
+  if (workouts.length === 0) return <div>No workouts available.</div>;
+
   return (
     <div className="overflow-x-auto mb-10">
       <table className="table-auto w-full bg-white shadow-lg rounded-lg">
         <thead className="bg-gray-200">
           <tr>
-            <th className="px-4 py-2 text-left font-medium">Name</th>
+            {/* Removed the 'Name' column */}
             <th className="px-4 py-2 text-left font-medium">Duration</th>
             <th className="px-4 py-2 text-left font-medium">Type</th>
-            <th className="px-4 py-2 text-left font-medium">Calories Burned</th>
-            <th className="px-4 py-2 text-right"></th>
+            <th className="px-4 py-2 text-left font-medium">Calories</th>
+            <th className="px-4 py-2 text-right">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -134,25 +169,19 @@ const WorkoutTable = ({ workouts, onEdit, onDelete }) => {
                 className="px-4 py-2 cursor-pointer"
                 onClick={() => onEdit(workout)}
               >
-                {workout.name}
-              </td>
-              <td
-                className="px-4 py-2 cursor-pointer"
-                onClick={() => onEdit(workout)}
-              >
                 {workout.duration}
               </td>
               <td
-                className="px-4 py-2 cursor-pointer"
+                className="px-4 py-2 cursor-pointer capitalize"
                 onClick={() => onEdit(workout)}
               >
-                {workout.type}
+                {capitalize(workout.type)}
               </td>
               <td
                 className="px-4 py-2 cursor-pointer"
                 onClick={() => onEdit(workout)}
               >
-                {workout.caloriesBurned}
+                {workout.calories}
               </td>
               <td className="px-4 py-2 text-right">
                 <button
@@ -183,8 +212,13 @@ const WorkoutTable = ({ workouts, onEdit, onDelete }) => {
   );
 };
 
-// Workout Modal
-const WorkoutModal = ({ workout, onFieldChange, onSave, onCancel }) => {
+const WorkoutModal = ({
+  workout,
+  onChange,
+  onSave,
+  onCancel,
+  workoutTypes,
+}) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white shadow-lg rounded-lg p-8 max-w-lg w-full">
@@ -192,18 +226,7 @@ const WorkoutModal = ({ workout, onFieldChange, onSave, onCancel }) => {
           {workout.id ? "Edit Workout" : "Add Workout"}
         </h3>
         <form className="space-y-6" onSubmit={onSave}>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Name
-            </label>
-            <input
-              type="text"
-              name="name"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={workout.name || ""}
-              onChange={onFieldChange}
-            />
-          </div>
+          {/* Removed the 'Name' field */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Duration
@@ -212,32 +235,56 @@ const WorkoutModal = ({ workout, onFieldChange, onSave, onCancel }) => {
               type="text"
               name="duration"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={workout.duration || ""}
-              onChange={onFieldChange}
+              value={workout.duration}
+              onChange={onChange}
+              required
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Type
             </label>
-            <input
-              type="text"
+            <select
               name="type"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={workout.type || ""}
-              onChange={onFieldChange}
+              value={workout.type}
+              onChange={onChange}
+              required
+            >
+              <option value="" disabled>
+                Select workout type
+              </option>
+              {workoutTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Calories
+            </label>
+            <input
+              type="number"
+              name="calories"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={workout.calories}
+              onChange={onChange}
+              required
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Calories Burned
+              Date
             </label>
             <input
-              type="number"
-              name="caloriesBurned"
+              type="date"
+              name="date"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={workout.caloriesBurned || ""}
-              onChange={onFieldChange}
+              value={workout.date}
+              onChange={onChange}
+              required
             />
           </div>
           <div className="flex justify-end space-x-4">
