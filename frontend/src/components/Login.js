@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 const API_BASE_URL = "http://localhost:8000";
 
-const Login = () => {
+const Login = ({ onLoginSuccess }) => {
   const [formData, setFormData] = useState({ username: "", password: "" });
   const [isRegistering, setIsRegistering] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -17,12 +17,6 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
-    console.log("Attempting to log in with:", {
-      username: formData.username,
-      password: formData.password,
-    });
-
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/login`, null, {
         params: {
@@ -31,9 +25,9 @@ const Login = () => {
         },
       });
 
-      console.log("Login successful:", response.data);
-      sessionStorage.setItem("access_token", response.data.access_token); // Save token
-      navigate("/workouts"); // Redirect to workouts
+      sessionStorage.setItem("access_token", response.data.access_token); 
+      onLoginSuccess(formData.username);
+      navigate("/workouts"); 
     } catch (error) {
       if (error.response) {
         console.error("Login error details:", error.response.data);
@@ -49,10 +43,7 @@ const Login = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      // Register the user
       await axios.post(`${API_BASE_URL}/auth/register`, formData);
-
-      // Automatically log the user in after registration
       const loginResponse = await axios.post(
         `${API_BASE_URL}/auth/login`,
         null,
@@ -63,10 +54,8 @@ const Login = () => {
           },
         }
       );
-
-      // Store the access token and redirect
-      sessionStorage.setItem("access_token", loginResponse.data.access_token); // Save token
-      navigate("/workouts"); // Redirect to workouts
+      setIsRegistering(false);
+      sessionStorage.setItem("access_token", loginResponse.data.access_token); 
     } catch (error) {
       const errorDetail =
         error.response?.data?.detail ||

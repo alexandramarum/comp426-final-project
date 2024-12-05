@@ -10,8 +10,22 @@ import Workouts from "./components/Workouts";
 import Goals from "./components/Goals";
 import Gyms from "./components/Gyms";
 import Login from "./components/Login";
+import { fetchUsername } from "./api/api";
+import { useState } from "react";
+import { useEffect } from "react";
 
 const App = () => {
+  const [username, setUsername] = useState()
+
+  const loadUsername = async () => {
+    try {
+      const data = await fetchUsername()
+      setUsername(data)
+    } catch (err) {
+      console.error("Failed to fetch goals:", err);
+    }
+  }
+
   return (
     <Router>
       <div data-theme="light" className="bg-gray-50 min-h-screen flex flex-col">
@@ -26,6 +40,17 @@ const App = () => {
             </Link>
             <nav>
               <ul className="flex space-x-6 text-lg font-medium">
+                <li>
+                <div>
+              {username ? (
+                <>
+                  <div className="text-lg font-medium">Hello, {username}</div>
+                </>
+              ) : (
+                <div className="text-lg font-medium">Not logged in</div>
+              )}
+            </div>
+                </li>
                 <li>
                   <Link
                     to="/workouts"
@@ -57,7 +82,7 @@ const App = () => {
 
         <main className="flex-grow">
           <Routes>
-            <Route path="/" element={<Login />} />
+            <Route path="/" element={<Login onLoginSuccess={loadUsername} />} />
             <Route path="/workouts" element={<Workouts />} />
             <Route path="/goals" element={<Goals />} />
             <Route path="/gyms" element={<Gyms />} />

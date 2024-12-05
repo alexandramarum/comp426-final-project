@@ -44,6 +44,24 @@ export const fetchWorkouts = async () => {
   }
 };
 
+export const fetchUsername = async () => {
+  const token = getAccessToken()
+  if (!token) {
+    throw new Error("Access token is missing. Please log in.")
+  }
+
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/auth/me`, {params: { token }}
+    )
+    console.log("Username successfully retrieved:", response.data)
+    return response.data.username
+  } catch (error) {
+    console.error("Error fetching username:")
+    throw error;
+  }
+}
+
 export const addWorkout = async (workoutData) => {
   const token = getAccessToken();
   if (!token) {
