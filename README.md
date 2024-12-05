@@ -2,6 +2,13 @@
 
 Gym4Us is a workout assistant application with clean UI, designed to help users track their workouts, set fitness goals, and find nearby gyms. It uses a React frontend for an interactive user experience and FastAPI on the backend to handle RESTful API requests. The app integrates the Google Places API to locate gyms based on the user's location.
 
+https://youtu.be/z-daNb33cFE
+
+## Presentation VIDEO LINK:
+
+https://youtu.be/z-daNb33cFE
+
+
 ## Features
 
 ### 1. **Workouts**
@@ -48,5 +55,5 @@ Gym4Us is a workout assistant application with clean UI, designed to help users 
 ### Gyms
 - `GET /gyms/nearby`: Get nearby gyms based on the user's location (uses Google Places API)
 
-## Presentation VIDEO LINK:
+
 
