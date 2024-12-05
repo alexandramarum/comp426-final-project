@@ -1,18 +1,15 @@
-// src/api/api.js
 import axios from "axios";
 
 const API_BASE_URL = "http://localhost:8000";
 
-// Function to retrieve the access token from sessionStorage
 const getAccessToken = () => sessionStorage.getItem("access_token");
 
-// Helper function to convert camelCase to snake_case
 const toSnakeCase = (obj) => {
   const newObj = {};
   for (const key in obj) {
     if (obj.hasOwnProperty(key)) {
       if (key === "goalStatus") {
-        newObj["status"] = obj[key]; // Explicitly map goalStatus to status
+        newObj["status"] = obj[key]; 
       } else {
         const snakeKey = key.replace(/([A-Z])/g, "_$1").toLowerCase();
         newObj[snakeKey] = obj[key];
@@ -22,7 +19,6 @@ const toSnakeCase = (obj) => {
   return newObj;
 };
 
-// Workouts API
 export const fetchWorkouts = async () => {
   const token = getAccessToken();
   if (!token) {
@@ -136,7 +132,6 @@ export const updateWorkout = async (workoutId, workoutData) => {
   }
 };
 
-// Goals API
 export const fetchGoals = async () => {
   const token = getAccessToken();
   if (!token) {
@@ -164,7 +159,6 @@ export const addGoal = async (goalData) => {
     throw new Error("Access token is missing. Please log in.");
   }
 
-  // Transform field names to snake_case, with goalStatus mapped to status
   const transformedGoalData = toSnakeCase(goalData);
 
   try {
@@ -210,7 +204,6 @@ export const updateGoal = async (goalId, goalData) => {
     throw new Error("Access token is missing. Please log in.");
   }
 
-  // Transform field names to snake_case, with goalStatus mapped to status
   const transformedGoalData = toSnakeCase(goalData);
 
   try {
@@ -232,7 +225,6 @@ export const updateGoal = async (goalId, goalData) => {
   }
 };
 
-// Auth API
 export const loginUser = async (username, password) => {
   try {
     const response = await axios.post(`${API_BASE_URL}/auth/login`, null, {
@@ -266,7 +258,6 @@ export const registerUser = async (userData) => {
   }
 };
 
-// Gym API
 export const fetchGyms = async (location, radius, type) => {
   const token = getAccessToken();
   if (!token) {

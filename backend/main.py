@@ -30,10 +30,10 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins; restrict this in production
+    allow_origins=["*"], 
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all HTTP methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"], 
+    allow_headers=["*"], 
 )
 
 
@@ -41,16 +41,14 @@ load_dotenv()
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-# Initialize database
 SQLModel.metadata.create_all(engine)
 
-# Include authentication routes
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 app.include_router(register_router, prefix="/auth", tags=["Auth"])
 app.include_router(login_router, prefix="/auth", tags=["Auth"])
 
 
-# Workout
+#Workout
 @app.post("/workouts/", response_model=WorkoutDetails, tags=["Workouts"])
 def add_workout(
     workout: WorkoutCreate,
@@ -89,7 +87,7 @@ def delete_aworkout(
     return {"message": "Workout deleted successfully"}
 
 
-# Goal
+#Goal
 @app.post("/goals/", response_model=GoalDetails, tags=["Goals"])
 def add_agoal(
     goal: GoalCreate,
@@ -161,10 +159,9 @@ async def gyms(
     radius: int = Query(1000, description="Radius in meters"),
     place_type: str = Query("gym", description="Type of place to search"),
 ):
-    # Google Places API URL
+    #googleapiurl
     google_api_url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
 
-    # Parameters to pass to the Google Places API
     params = {
         "location": location,
         "radius": radius,

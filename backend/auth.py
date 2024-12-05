@@ -19,7 +19,7 @@ load_dotenv()
 
 SECRET = os.getenv("JWT_SECRET")
 ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", 30))
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", 15))
 
 auth_router = APIRouter()
 register_router = APIRouter()
@@ -31,11 +31,11 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     if expires_delta:
         expire = (
             datetime.now(timezone.utc) + expires_delta
-        )  # Use timezone-aware UTC datetime
+        ) 
     else:
         expire = datetime.now(timezone.utc) + timedelta(
             minutes=15
-        )  # Default expiration
+        ) 
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET, algorithm=ALGORITHM)
 
@@ -50,7 +50,7 @@ def get_current_user(token: str, session: Session = Depends(get_session)) -> Use
         user = session.get(User, int(user_id))
         if user is None:
             raise HTTPException(status_code=401, detail="User not found")
-        logging.debug(f"DEBUG: Retrieved user: {user}")  # Add this line
+        logging.debug(f"DEBUG: Retrieved user: {user}")  
         return user
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
